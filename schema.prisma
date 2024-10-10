@@ -1,0 +1,132 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Game {
+  id Int @id
+
+  // Game Details
+  name           String
+  about          String
+  detailedDesc   String
+  shortDesc      String
+  reviews        String
+  headerImg      String
+  website        String
+  supportURL     String
+  supportEmail   String
+  price          Float
+  releaseDate    DateTime
+  requiredAge    Int
+  dlcCount       Int
+  achievements   Int
+  windowsSupport Boolean
+  macSupport     Boolean
+  linuxSupport   Boolean
+
+  // Average Playtime
+  avePlaytimeForever Int
+  avePlaytime2Weeks  Int
+  medPlaytimeForever Int
+  medPlaytime2Weeks  Int
+
+  // Metrics
+  peakCCU         Int
+  metacriticScore Int
+  metacriticURL   String
+  notes           String
+  scoreRank       String
+  positiveReviews Int
+  negativeReviews Int
+  estimatedOwners String
+
+  // Relations
+  gameLanguages  Language[]   @relation("gameLanguages")
+  audioLanguages Language[]   @relation("audioLanguages")
+  categories     Category[]
+  genres         Genre[]
+  developers     Developer[]
+  packages       Package[]
+  screenshots    Screenshot[]
+  movies         Movie[]
+  GameTag        GameTag[]
+  Publisher      Publisher[]
+}
+
+model Language {
+  name                String @id
+  gameId              Int?
+  supportedGames      Game[] @relation("gameLanguages")
+  audioSupportedGames Game[] @relation("audioLanguages")
+}
+
+model Package {
+  id          Int          @id @default(autoincrement())
+  gameId      Int
+  title       String
+  description String?
+  subs        PackageSub[]
+  game        Game         @relation(fields: [gameId], references: [id])
+}
+
+model PackageSub {
+  id          Int      @id @default(autoincrement())
+  text        String
+  description String
+  price       Float
+  Package     Package? @relation(fields: [packageId], references: [id])
+  packageId   Int?
+}
+
+model Developer {
+  name   String @id
+  Game   Game?  @relation(fields: [gameId], references: [id])
+  gameId Int?
+}
+
+model Publisher {
+  name   String @id
+  Game   Game?  @relation(fields: [gameId], references: [id])
+  gameId Int?
+}
+
+model Category {
+  name   String @id
+  Game   Game?  @relation(fields: [gameId], references: [id])
+  gameId Int?
+}
+
+model Genre {
+  name   String @id
+  Game   Game?  @relation(fields: [gameId], references: [id])
+  gameId Int?
+}
+
+model Screenshot {
+  url    String @id
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId Int
+}
+
+model Movie {
+  url    String @id
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId Int
+}
+
+model Tag {
+  name    String    @id
+  GameTag GameTag[]
+}
+
+model GameTag {
+  reviewerCount Int
+  gameId        Int
+  tagName       String
+
+  game Game @relation(fields: [gameId], references: [id])
+  tag  Tag  @relation(fields: [tagName], references: [name])
+
+  @@id([gameId, tagName])
+}
