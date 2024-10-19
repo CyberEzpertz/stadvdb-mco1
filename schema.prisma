@@ -3,7 +3,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Game {
+model FactGame {
   id Int @id
 
   // Game Details
@@ -17,7 +17,6 @@ model Game {
   supportURL   String
   supportEmail String
   price        Float
-  releaseDate  DateTime
   requiredAge  Int
   dlcCount     Int
   achievements Int
@@ -40,31 +39,31 @@ model Game {
   reviewerCount   Int
 
   // Relations
-  packages    Package[]
-  screenshots Screenshot[]
-  movies      Movie[]
-  GameTag     GameTag[]
+  packages    DimPackage[]
+  screenshots DimScreenshot[]
+  movies      DimMovie[]
+  GameTag     DimTagGroup[]
 
-  GenreGroup       GenreGroup     @relation(fields: [genreGroupId], references: [genreGroupId])
-  LanguageGroup    LanguageGroup  @relation(fields: [languageGroupId], references: [languageGroupId])
-  DeveloperGroup   DeveloperGroup @relation(fields: [developerGroupId], references: [developerGroupId])
-  PublisherGroup   PublisherGroup @relation(fields: [publisherGroupId], references: [publisherGroupId])
-  CategoryGroup    CategoryGroup  @relation(fields: [categoryGroupId], references: [categoryGroupId])
-  dimSupport       dimSupport     @relation(fields: [dimSupportId], references: [supportId])
-  dimDate          dimDate        @relation(fields: [dimDateDate], references: [date])
+  GenreGroup       DimGenreGroup     @relation(fields: [genreGroupId], references: [genreGroupId])
+  LanguageGroup    DimLanguageGroup  @relation(fields: [languageGroupId], references: [languageGroupId])
+  DeveloperGroup   DimDeveloperGroup @relation(fields: [developerGroupId], references: [developerGroupId])
+  PublisherGroup   DimPublisherGroup @relation(fields: [publisherGroupId], references: [publisherGroupId])
+  CategoryGroup    DimCategoryGroup  @relation(fields: [categoryGroupId], references: [categoryGroupId])
+  DimSupport       DimSupport        @relation(fields: [dimSupportId], references: [supportId])
+  DimDate          DimDate           @relation(fields: [releaseDate], references: [date])
   genreGroupId     Int
   languageGroupId  Int
   developerGroupId Int
   publisherGroupId Int
   categoryGroupId  Int
   dimSupportId     Int
-  dimDateDate      DateTime
+  releaseDate      DateTime
 }
 
 model TextLanguage {
   language        String
   groupId         Int
-  languageGroupId LanguageGroup @relation(fields: [groupId], references: [languageGroupId])
+  languageGroupId DimLanguageGroup @relation(fields: [groupId], references: [languageGroupId])
 
   @@id([language, groupId])
 }
@@ -72,130 +71,131 @@ model TextLanguage {
 model AudioLanguage {
   language        String
   groupId         Int
-  languageGroupId LanguageGroup @relation(fields: [groupId], references: [languageGroupId])
+  languageGroupId DimLanguageGroup @relation(fields: [groupId], references: [languageGroupId])
 
   @@id([language, groupId])
 }
 
-model LanguageGroup {
+model DimLanguageGroup {
   languageGroupId Int             @id
-  game            Game[]
+  game            FactGame[]
   TextLanguage    TextLanguage[]
   AudioLanguage   AudioLanguage[]
 }
 
-model Package {
-  id          Int          @id @default(autoincrement())
+model DimPackage {
+  id          Int             @id @default(autoincrement())
   gameId      Int
   title       String
   description String?
-  subs        PackageSub[]
-  game        Game         @relation(fields: [gameId], references: [id])
+  subs        DimPackageSub[]
+  game        FactGame        @relation(fields: [gameId], references: [id])
 }
 
-model PackageSub {
-  id          Int      @id @default(autoincrement())
+model DimPackageSub {
+  id          Int         @id @default(autoincrement())
   text        String
   description String
   price       Float
-  Package     Package? @relation(fields: [packageId], references: [id])
+  Package     DimPackage? @relation(fields: [packageId], references: [id])
   packageId   Int?
 }
 
 model Developer {
   name             String
   groupId          Int
-  developerGroupId DeveloperGroup @relation(fields: [groupId], references: [developerGroupId])
+  developerGroupId DimDeveloperGroup @relation(fields: [groupId], references: [developerGroupId])
 
   @@id([name, groupId])
 }
 
-model DeveloperGroup {
+model DimDeveloperGroup {
   developerGroupId Int         @id
-  game             Game[]
+  game             FactGame[]
   Developer        Developer[]
 }
 
 model Publisher {
   name             String
   groupId          Int
-  publisherGroupId PublisherGroup @relation(fields: [groupId], references: [publisherGroupId])
+  publisherGroupId DimPublisherGroup @relation(fields: [groupId], references: [publisherGroupId])
 
   @@id([name, groupId])
 }
 
-model PublisherGroup {
+model DimPublisherGroup {
   publisherGroupId Int         @id
-  game             Game[]
+  game             FactGame[]
   Publisher        Publisher[]
 }
 
 model Category {
   name            String
   groupId         Int
-  categoryGroupId CategoryGroup @relation(fields: [groupId], references: [categoryGroupId])
+  categoryGroupId DimCategoryGroup @relation(fields: [groupId], references: [categoryGroupId])
 
   @@id([name, groupId])
 }
 
-model CategoryGroup {
+model DimCategoryGroup {
   categoryGroupId Int        @id
-  game            Game[]
+  game            FactGame[]
   Category        Category[]
 }
 
 model Genre {
   genre        String
   groupId      Int
-  genreGroupId GenreGroup @relation(fields: [groupId], references: [genreGroupId])
+  genreGroupId DimGenreGroup @relation(fields: [groupId], references: [genreGroupId])
 
   @@id([genre, groupId])
 }
 
-model GenreGroup {
-  genreGroupId Int     @id
-  game         Game[]
+model DimGenreGroup {
+  genreGroupId Int        @id
+  game         FactGame[]
   Genre        Genre[]
 }
 
-model Screenshot {
-  url    String @id
-  game   Game   @relation(fields: [gameId], references: [id])
+model DimScreenshot {
+  url    String   @id
+  game   FactGame @relation(fields: [gameId], references: [id])
   gameId Int
 }
 
-model Movie {
-  url    String @id
-  game   Game   @relation(fields: [gameId], references: [id])
+model DimMovie {
+  url    String   @id
+  game   FactGame @relation(fields: [gameId], references: [id])
   gameId Int
 }
 
 model Tag {
   name           String
   groupId        Int
-  GameTagGroupId GameTag @relation(fields: [groupId], references: [tagGroupId])
+  count          Int
+  GameTagGroupId DimTagGroup @relation(fields: [groupId], references: [tagGroupId])
 
-  @@id([name, groupId])
+  @@id([name, groupId, count])
 }
 
-model GameTag {
-  tagGroupId Int    @id
-  game       Game[]
+model DimTagGroup {
+  tagGroupId Int        @id
+  game       FactGame[]
   Tag        Tag[]
 }
 
-model dimSupport {
-  supportId      Int     @id
+model DimSupport {
+  supportId      Int        @id
   macSupport     Boolean
   windowsSupport Boolean
   linuxSupport   Boolean
-  game           Game[]
+  game           FactGame[]
 }
 
-model dimDate {
-  date    DateTime @id
-  quarter Int
-  month   String
-  year    Int
-  Game    Game[]
+model DimDate {
+  date     DateTime   @id
+  quarter  Int
+  month    String
+  year     Int
+  FactGame FactGame[]
 }
