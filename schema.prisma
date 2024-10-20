@@ -3,6 +3,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model FactGame {
   id Int @id
 
@@ -42,7 +46,7 @@ model FactGame {
   packages    DimPackage[]
   screenshots DimScreenshot[]
   movies      DimMovie[]
-  GameTag     DimTagGroup[]
+  TagGroup    DimTagGroup     @relation(fields: [tagGroupId], references: [tagGroupId])
 
   GenreGroup       DimGenreGroup     @relation(fields: [genreGroupId], references: [genreGroupId])
   LanguageGroup    DimLanguageGroup  @relation(fields: [languageGroupId], references: [languageGroupId])
@@ -58,6 +62,7 @@ model FactGame {
   categoryGroupId  Int
   dimSupportId     Int
   releaseDate      DateTime
+  tagGroupId       Int
 }
 
 model TextLanguage {

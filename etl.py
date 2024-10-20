@@ -246,7 +246,7 @@ def transform_data(df):
 
 
 def load_data():
-    with psycopg.connect("dbname=test user=postgres") as conn:
+    with psycopg.connect("postgresql://user:password@localhost:5001/postgres") as conn:
         with conn.cursor() as cur:
             pass
 
