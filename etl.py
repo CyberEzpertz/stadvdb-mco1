@@ -13,6 +13,8 @@ categories = []
 tags = []
 packages = []
 sub_packages = []
+movies = []
+screenshots = []
 
 # Initialize dictionaries for dimension groups to track unique entries
 language_group = {}
@@ -42,14 +44,12 @@ def parse_date(date):
 
 
 def create_dimDate(date: datetime):
-    day = date.day
     quarter = math.ceil(date.month / 3)
     month = date.month
     year = date.year
 
     return {
         'date': date,
-        'day': day,
         'month': month,
         'year': year,
         'quarter': quarter
@@ -122,8 +122,8 @@ def transform_data(df):
                 data = {"language": textLang, "groupId": groupId}
                 text_languages.append(data)
             for audioLang in languages[1]:
-                data = {"language": textLang, "groupId": groupId}
-                text_languages.append(data)
+                data = {"language": audioLang, "groupId": groupId}
+                audio_languages.append(data)
 
             new_row["languageGroupId"] = groupId
         else:
@@ -193,7 +193,8 @@ def transform_data(df):
                 tag_group[tags_tuple] = groupId
 
                 for tag in tags_tuple:
-                    data = {"tag": tag[0], "groupId": groupId, "count": tag[1]}
+                    data = {"name": tag[0],
+                            "groupId": groupId, "count": tag[1]}
                     tags.append(data)
 
                 new_row["tagGroupId"] = groupId
@@ -216,16 +217,18 @@ def transform_data(df):
         support_tuple = (row["mac"], row["windows"], row["linux"])
         if support_tuple not in support_group:
             supportId = len(support_group) + 1
-            support_group[support_tuple] = supportId
             data = {"supportId": supportId,
                     "macSupport": support_tuple[0], "windowsSupport": support_tuple[1], "linuxSupport": support_tuple[2]}
+            support_group[support_tuple] = data
+
             new_row["dimSupportId"] = supportId
         else:
-            new_row["dimSupportId"] = support_group[support_tuple]
+            new_row["dimSupportId"] = support_group[support_tuple]["supportId"]
 
         # Handle Packages
         for package in row["packages"]:
             data = {
+                "id": len(packages) + 1,
                 "title": package["title"],
                 "description": package["description"],
                 "gameId": index
@@ -241,14 +244,108 @@ def transform_data(df):
                 }
                 sub_packages.append(subData)
 
+        # Handle Movies & Screenshots
+        for movie in row["movies"]:
+            data = {
+                "url": movie,
+                "gameId": index
+            }
+            movies.append(data)
+
+        for screenshot in row["screenshots"]:
+            data = {
+                "url": screenshot,
+                "gameId": index
+            }
+            screenshots.append(data)
+
         # Store the FactGame row
         fact_game_rows.append(new_row)
 
 
+def insert_group_rows(cur, num, table_name):
+    try:
+        vals = [(x,) for x in range(1, num+1)]
+        # query = f'INSERT INTO "{table_name}" VALUES (%s)'
+        copy = f'COPY "{table_name}" FROM STDIN'
+        print(f"[START] INSERT -> {table_name}.")
+
+        with cur.copy(copy) as copy:
+            for value in vals:
+                copy.write_row(value)
+
+        print(f"[SUCCESS] INSERT -> {table_name}.")
+    except Exception as e:
+        print(f"[ERROR] Skipped INSERT -> {table_name}.")
+        print(f"[ERROR] Exception: {e}")
+
+
+def insert_dict_array(cur, dictVals, table_name):
+    try:
+        print(f"[START] INSERT -> {table_name}.")
+        keys = dictVals[0].keys()
+        columns = [f'"{key}"' for key in keys]
+        values = set(tuple(entry.values()) for entry in dictVals)
+        copy = f'COPY "{table_name}" ({', '.join(columns)}) FROM STDIN'
+        with cur.copy(copy) as copy:
+            for value in values:
+                copy.write_row(value)
+
+        print(f"[SUCCESS] INSERT -> {table_name}.")
+    except Exception as e:
+        print(f"[ERROR] Skipped INSERT -> {table_name}.")
+        print(f"[ERROR] Exception: {e}")
+
+
+def insert_nested_dict(cur, dictVals, table_name):
+    try:
+        print(f"[START] INSERT -> {table_name}.")
+        values = list(dictVals.values())
+        keys = values[0].keys()
+        columns = [f'"{key}"' for key in keys]
+        placeholders = [f'%({key})s' for key in keys]
+        query = f'''INSERT INTO "{table_name}" ({', '.join(columns)}) VALUES ({
+            ", ".join(placeholders)})'''
+        cur.executemany(query, values)
+
+        print(f"[SUCCESS] INSERT -> {table_name}.")
+    except Exception as e:
+        print(f"[ERROR] Skipped INSERT -> {table_name}.")
+        print(f"[ERROR] Exception: {e}")
+
+
 def load_data():
-    with psycopg.connect("postgresql://user:password@localhost:5001/postgres") as conn:
+    with psycopg.connect("postgresql://user:password@localhost:5001/postgres", autocommit=True) as conn:
         with conn.cursor() as cur:
-            pass
+            # Insert Groups
+            insert_group_rows(cur, len(publisher_group), "DimPublisherGroup")
+            insert_group_rows(cur, len(language_group), "DimLanguageGroup")
+            insert_group_rows(cur, len(category_group), "DimCategoryGroup")
+            insert_group_rows(cur, len(developer_group), "DimDeveloperGroup")
+            insert_group_rows(cur, len(tag_group), "DimTagGroup")
+            insert_group_rows(cur, len(genre_group), "DimGenreGroup")
+
+            # Insert granular data
+            insert_dict_array(cur, text_languages, "TextLanguage")
+            insert_dict_array(cur, audio_languages, "AudioLanguage")
+            insert_dict_array(cur, genres, "Genre")
+            insert_dict_array(cur, developers, "Developer")
+            insert_dict_array(cur, publishers, "Publisher")
+            insert_dict_array(cur, categories, "Category")
+            insert_dict_array(cur, tags, "Tag")
+
+            # Insert nested dictionaries
+            insert_nested_dict(cur, support_group, "DimSupport")
+            insert_nested_dict(cur, dim_date, "DimDate")
+
+            # Insert fact rows
+            insert_dict_array(cur, fact_game_rows, "FactGame")
+
+            # Insert many-to-one data
+            insert_dict_array(cur, packages, "DimPackage")
+            insert_dict_array(cur, movies, "DimMovie")
+            insert_dict_array(cur, screenshots, "DimScreenshot")
+            insert_dict_array(cur, sub_packages, "DimPackageSub")
 
 
 def main():
@@ -256,7 +353,7 @@ def main():
     df = extract_data()
     print("Transforming the data...")
     transform_data(df)
-    print(fact_game_rows[0])
+    print("Loading the data...")
     load_data()
 
 

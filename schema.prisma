@@ -46,8 +46,8 @@ model FactGame {
   packages    DimPackage[]
   screenshots DimScreenshot[]
   movies      DimMovie[]
-  TagGroup    DimTagGroup     @relation(fields: [tagGroupId], references: [tagGroupId])
 
+  TagGroup         DimTagGroup       @relation(fields: [tagGroupId], references: [tagGroupId])
   GenreGroup       DimGenreGroup     @relation(fields: [genreGroupId], references: [genreGroupId])
   LanguageGroup    DimLanguageGroup  @relation(fields: [languageGroupId], references: [languageGroupId])
   DeveloperGroup   DimDeveloperGroup @relation(fields: [developerGroupId], references: [developerGroupId])
@@ -89,7 +89,7 @@ model DimLanguageGroup {
 }
 
 model DimPackage {
-  id          Int             @id @default(autoincrement())
+  id          Int             @id
   gameId      Int
   title       String
   description String?
@@ -163,15 +163,19 @@ model DimGenreGroup {
 }
 
 model DimScreenshot {
-  url    String   @id
+  url    String
   game   FactGame @relation(fields: [gameId], references: [id])
   gameId Int
+
+  @@id([url, gameId])
 }
 
 model DimMovie {
-  url    String   @id
+  url    String
   game   FactGame @relation(fields: [gameId], references: [id])
   gameId Int
+
+  @@id([url, gameId])
 }
 
 model Tag {
