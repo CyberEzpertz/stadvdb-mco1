@@ -2,6 +2,12 @@ import pandas as pd
 import math
 import psycopg
 from datetime import datetime
+import os
+from dotenv import load_dotenv, dotenv_values
+
+load_dotenv()
+
+db_url = os.getenv("DATABASE_URL")
 
 # Initialize the tables with granular data
 text_languages = []
@@ -266,7 +272,6 @@ def transform_data(df):
 def insert_group_rows(cur, num, table_name):
     try:
         vals = [(x,) for x in range(1, num+1)]
-        # query = f'INSERT INTO "{table_name}" VALUES (%s)'
         copy = f'COPY "{table_name}" FROM STDIN'
         print(f"[START] INSERT -> {table_name}.")
 
@@ -315,7 +320,7 @@ def insert_nested_dict(cur, dictVals, table_name):
 
 
 def load_data():
-    with psycopg.connect("postgresql://user:password@localhost:5001/postgres", autocommit=True) as conn:
+    with psycopg.connect(db_url, autocommit=True) as conn:
         with conn.cursor() as cur:
             # Insert Groups
             insert_group_rows(cur, len(publisher_group), "DimPublisherGroup")
@@ -349,6 +354,7 @@ def load_data():
 
 
 def main():
+    os.environ['PGGSSENCMODE'] = 'disable'
     print("Extracting the data...")
     df = extract_data()
     print("Transforming the data...")
