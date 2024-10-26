@@ -47,14 +47,14 @@ model FactGame {
   screenshots DimScreenshot[]
   movies      DimMovie[]
 
-  TagGroup         DimTagGroup       @relation(fields: [tagGroupId], references: [tagGroupId])
-  GenreGroup       DimGenreGroup     @relation(fields: [genreGroupId], references: [genreGroupId])
-  LanguageGroup    DimLanguageGroup  @relation(fields: [languageGroupId], references: [languageGroupId])
-  DeveloperGroup   DimDeveloperGroup @relation(fields: [developerGroupId], references: [developerGroupId])
-  PublisherGroup   DimPublisherGroup @relation(fields: [publisherGroupId], references: [publisherGroupId])
-  CategoryGroup    DimCategoryGroup  @relation(fields: [categoryGroupId], references: [categoryGroupId])
-  DimSupport       DimSupport        @relation(fields: [dimSupportId], references: [supportId])
-  DimDate          DimDate           @relation(fields: [releaseDate], references: [date])
+  TagGroup         DimTagGroup       @relation(fields: [tagGroupId], references: [tagGroupId], onDelete: Cascade)
+  GenreGroup       DimGenreGroup     @relation(fields: [genreGroupId], references: [genreGroupId], onDelete: Cascade)
+  LanguageGroup    DimLanguageGroup  @relation(fields: [languageGroupId], references: [languageGroupId], onDelete: Cascade)
+  DeveloperGroup   DimDeveloperGroup @relation(fields: [developerGroupId], references: [developerGroupId], onDelete: Cascade)
+  PublisherGroup   DimPublisherGroup @relation(fields: [publisherGroupId], references: [publisherGroupId], onDelete: Cascade)
+  CategoryGroup    DimCategoryGroup  @relation(fields: [categoryGroupId], references: [categoryGroupId], onDelete: Cascade)
+  DimSupport       DimSupport        @relation(fields: [dimSupportId], references: [supportId], onDelete: Cascade)
+  DimDate          DimDate           @relation(fields: [releaseDate], references: [date], onDelete: Cascade)
   genreGroupId     Int
   languageGroupId  Int
   developerGroupId Int
@@ -68,7 +68,7 @@ model FactGame {
 model TextLanguage {
   language        String
   groupId         Int
-  languageGroupId DimLanguageGroup @relation(fields: [groupId], references: [languageGroupId])
+  languageGroupId DimLanguageGroup @relation(fields: [groupId], references: [languageGroupId], onDelete: Cascade)
 
   @@id([language, groupId])
 }
@@ -76,7 +76,7 @@ model TextLanguage {
 model AudioLanguage {
   language        String
   groupId         Int
-  languageGroupId DimLanguageGroup @relation(fields: [groupId], references: [languageGroupId])
+  languageGroupId DimLanguageGroup @relation(fields: [groupId], references: [languageGroupId], onDelete: Cascade)
 
   @@id([language, groupId])
 }
@@ -94,7 +94,7 @@ model DimPackage {
   title       String
   description String?
   subs        DimPackageSub[]
-  game        FactGame        @relation(fields: [gameId], references: [id])
+  game        FactGame        @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model DimPackageSub {
@@ -102,14 +102,14 @@ model DimPackageSub {
   text        String
   description String
   price       Float
-  Package     DimPackage? @relation(fields: [packageId], references: [id])
+  Package     DimPackage? @relation(fields: [packageId], references: [id], onDelete: Cascade)
   packageId   Int?
 }
 
 model Developer {
   name             String
   groupId          Int
-  developerGroupId DimDeveloperGroup @relation(fields: [groupId], references: [developerGroupId])
+  developerGroupId DimDeveloperGroup @relation(fields: [groupId], references: [developerGroupId], onDelete: Cascade)
 
   @@id([name, groupId])
 }
@@ -123,7 +123,7 @@ model DimDeveloperGroup {
 model Publisher {
   name             String
   groupId          Int
-  publisherGroupId DimPublisherGroup @relation(fields: [groupId], references: [publisherGroupId])
+  publisherGroupId DimPublisherGroup @relation(fields: [groupId], references: [publisherGroupId], onDelete: Cascade)
 
   @@id([name, groupId])
 }
@@ -137,7 +137,7 @@ model DimPublisherGroup {
 model Category {
   name            String
   groupId         Int
-  categoryGroupId DimCategoryGroup @relation(fields: [groupId], references: [categoryGroupId])
+  categoryGroupId DimCategoryGroup @relation(fields: [groupId], references: [categoryGroupId], onDelete: Cascade)
 
   @@id([name, groupId])
 }
@@ -151,7 +151,7 @@ model DimCategoryGroup {
 model Genre {
   genre        String
   groupId      Int
-  genreGroupId DimGenreGroup @relation(fields: [groupId], references: [genreGroupId])
+  genreGroupId DimGenreGroup @relation(fields: [groupId], references: [genreGroupId], onDelete: Cascade)
 
   @@id([genre, groupId])
 }
@@ -164,7 +164,7 @@ model DimGenreGroup {
 
 model DimScreenshot {
   url    String
-  game   FactGame @relation(fields: [gameId], references: [id])
+  game   FactGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
 
   @@id([url, gameId])
@@ -172,7 +172,7 @@ model DimScreenshot {
 
 model DimMovie {
   url    String
-  game   FactGame @relation(fields: [gameId], references: [id])
+  game   FactGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int
 
   @@id([url, gameId])
@@ -182,7 +182,7 @@ model Tag {
   name           String
   groupId        Int
   count          Int
-  GameTagGroupId DimTagGroup @relation(fields: [groupId], references: [tagGroupId])
+  GameTagGroupId DimTagGroup @relation(fields: [groupId], references: [tagGroupId], onDelete: Cascade)
 
   @@id([name, groupId, count])
 }
